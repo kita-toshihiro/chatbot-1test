@@ -20,11 +20,7 @@ else:
     # Configure Gemini API with trimmed key.
     api_key = gemini_api_key.strip()
     genai.configure(api_key=api_key)
-
-    # Allow user to select model (with gemini-1.5-flash as default)
-    model_options = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]
-    selected_model = st.selectbox("Select Gemini Model", model_options, index=0)
-    model = genai.GenerativeModel(selected_model)
+    model = genai.GenerativeModel("gemini-3.8-flash")
 
     # Create a session state variable to store the chat messages. This ensures that the
     # messages persist across reruns.
@@ -69,9 +65,9 @@ else:
                 response = st.write_stream(stream_generator)
             st.session_state.messages.append({"role": "assistant", "content": response})
         except Exception as e:
-            st.error(f"Error generating response ({selected_model}): {e}")
+            st.error(f"Error generating response (gemini-3.8-flash): {e}")
             st.info(
                 "If you receive a 404 (NotFound) error, please check:\n"
                 "1. Your API key was obtained from Google AI Studio (https://aistudio.google.com/app/apikey).\n"
-                "2. Try switching to another model (e.g., 'gemini-2.0-flash' or 'gemini-1.5-pro')."
+                "2. Ensure your account has access to the gemini-3.8-flash model."
             )
