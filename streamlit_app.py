@@ -17,9 +17,14 @@ if not gemini_api_key:
     st.info("Please add your Gemini API key to continue.", icon="🗝️")
 else:
 
-    # Configure Gemini API.
-    genai.configure(api_key=gemini_api_key)
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    # Configure Gemini API with trimmed key.
+    api_key = gemini_api_key.strip()
+    genai.configure(api_key=api_key)
+
+    # Allow user to select model (with gemini-1.5-flash as default)
+    model_options = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]
+    selected_model = st.selectbox("Select Gemini Model", model_options, index=0)
+    model = genai.GenerativeModel(selected_model)
 
     # Create a session state variable to store the chat messages. This ensures that the
     # messages persist across reruns.
@@ -50,15 +55,23 @@ else:
         ]
 
         # Generate a response using the Gemini API.
-        stream = model.generate_content(gemini_messages, stream=True)
+        try:
+            stream = model.generate_content(gemini_messages, stream=True)
 
-        def stream_generator():
-            for chunk in stream:
-                if chunk.text:
-                    yield chunk.text
+            def stream_generator():
+                for chunk in stream:
+                    if chunk.text:
+                        yield chunk.text
 
-        # Stream the response to the chat using `st.write_stream`, then store it in 
-        # session state.
-        with st.chat_message("assistant"):
-            response = st.write_stream(stream_generator)
-        st.session_state.messages.append({"role": "assistant", "content": response})
+            # Stream the response to the chat using `st.write_stream`, then store it in 
+            # session state.
+            with st.chat_message("assistant"):
+                response = st.write_stream(stream_generator)
+            st.session_state.messages.append({"role": "assistant", "content": response})
+        except Exception as e:
+            st.error(f"Error generating response ({selected_model}): {e}")
+            st.info(
+                "If you receive a 404 (NotFound) error, please check:\n"
+                "1. Your API key was obtained from Google AI Studio (https://aistudio.google.com/app/apikey).\n"
+                "2. Try switching to another model (e.g., 'gemini-2.0-flash' or 'gemini-1.5-pro')."
+            )
